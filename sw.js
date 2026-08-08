@@ -1,4 +1,4 @@
-const CACHE = "liniya-v2-turn-fix";
+const CACHE = "liniya-v2-metered-ready";
 const CORE = ["./", "./index.html", "./styles.css", "./config.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

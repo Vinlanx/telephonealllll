@@ -30,9 +30,9 @@ window.PHONE_CONFIG = {
   // 3) встав appName та credential-scoped apiKey сюди.
   // Документація Metered каже, що credential apiKey можна використовувати у frontend.
   meteredTurn: {
-    enabled: false,
-    appName: "",
-    apiKey: ""
+    enabled: true,
+    appName: "testtttcall",
+    apiKey: "5112149aa62c33701e79497702917cbf3f7a"
   },
 
   outgoingCallTimeoutMs: 25000,
