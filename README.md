@@ -1,3 +1,28 @@
+# ВАЖЛИВЕ ОНОВЛЕННЯ — TURN
+
+Старі безкоштовні TURN-сервери PeerJS (`eu-0.turn.peerjs.com` / `us-0.turn.peerjs.com`) більше не використовуються: сервіс був закритий. Через це mobile ↔ Wi‑Fi часто зависає на «З’єднання…», якщо прямий P2P не проходить.
+
+## Як увімкнути робочий TURN (Metered Open Relay)
+
+1. Створи безкоштовний акаунт Metered.
+2. У Dashboard створи TURN credential.
+3. Скопіюй назву застосунку (`appName`) і credential-scoped `apiKey`.
+4. У `config.js` зміни:
+
+```js
+meteredTurn: {
+  enabled: true,
+  appName: "ТВОЯ_НАЗВА",
+  apiKey: "ТВІЙ_CREDENTIAL_API_KEY"
+}
+```
+
+5. Commit зміни на GitHub Pages і на обох пристроях онови сторінку. Якщо PWA кешує старі файли — закрий усі вкладки сайту та відкрий його заново.
+
+`apiKey` тут саме credential-scoped ключ для отримання ICE-конфігурації; не вставляй у frontend account Secret Key.
+
+---
+
 # Лінія — простий WebRTC-телефон для GitHub Pages
 
 Статичний голосовий дзвінок 1-на-1 без акаунтів і номерів телефону.

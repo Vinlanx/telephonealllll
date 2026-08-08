@@ -1,7 +1,8 @@
 /*
-  ЛІНІЯ — конфігурація мережі.
-  За замовчуванням використовується публічний PeerServer Cloud тільки для signaling.
-  Голос передається через WebRTC напряму або через TURN, якщо пряме з'єднання неможливе.
+  ЛІНІЯ — мережевий конфіг.
+
+  ВАЖЛИВО: старі безкоштовні TURN-сервери PeerJS більше не використовуються.
+  Для надійного mobile <-> Wi-Fi підключення налаштуй Metered Open Relay нижче.
 */
 window.PHONE_CONFIG = {
   appName: "Лінія",
@@ -17,19 +18,23 @@ window.PHONE_CONFIG = {
     reconnectMaxMs: 15000
   },
 
-  // Відповідає default ICE config PeerJS 1.5.5.
+  // Працює для прямих P2P-з'єднань. TURN додається динамічно нижче.
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    {
-      urls: [
-        "turn:eu-0.turn.peerjs.com:3478",
-        "turn:us-0.turn.peerjs.com:3478"
-      ],
-      username: "peerjs",
-      credential: "peerjsp"
-    }
+    { urls: "stun:stun.relay.metered.ca:80" }
   ],
 
-  outgoingCallTimeoutMs: 30000,
+  // Безкоштовний TURN через Metered Open Relay.
+  // 1) створи free account на Metered
+  // 2) створи TURN credential
+  // 3) встав appName та credential-scoped apiKey сюди.
+  // Документація Metered каже, що credential apiKey можна використовувати у frontend.
+  meteredTurn: {
+    enabled: false,
+    appName: "",
+    apiKey: ""
+  },
+
+  outgoingCallTimeoutMs: 25000,
   audioMaxBitrate: 64000
 };

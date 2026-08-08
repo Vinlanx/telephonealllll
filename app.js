@@ -79,6 +79,8 @@
     connected: false,
     isMuted: false,
     selectedDeviceId: "",
+    resolvedIceServers: null,
+    iceConfigError: "",
 
     audioPrefs: {
       echoCancellation: false,
@@ -98,6 +100,7 @@
     setupAudioPreferenceUI();
     bindEvents();
     refreshMicrophones(false).catch(() => {});
+    resolveIceServers().catch(() => {});
     connectSignaling();
 
     if ("serviceWorker" in navigator && location.protocol === "https:") {
@@ -562,7 +565,7 @@
 
       clearTimeout(state.outgoingTimer);
       state.outgoingTimer = setTimeout(() => {
-        if (!state.connected) endCall({ notify: true, message: "Немає відповіді" });
+        if (!state.connected) endCall({ notify: true, message: state.iceConfigError ? `Немає з'єднання • ${state.iceConfigError}` : "Немає з'єднання" });
       }, CFG.outgoingCallTimeoutMs || 30000);
     } catch (err) {
       console.error(err);
@@ -694,11 +697,57 @@
     }
   }
 
+  async function resolveIceServers() {
+    if (state.resolvedIceServers) return state.resolvedIceServers;
+
+    const base = Array.isArray(CFG.iceServers) ? [...CFG.iceServers] : [];
+    const mt = CFG.meteredTurn || {};
+
+    if (!mt.enabled) {
+      state.resolvedIceServers = base;
+      state.iceConfigError = "TURN не налаштований";
+      return state.resolvedIceServers;
+    }
+
+    const appName = String(mt.appName || "").trim();
+    const apiKey = String(mt.apiKey || "").trim();
+    if (!appName || !apiKey) {
+      state.resolvedIceServers = base;
+      state.iceConfigError = "TURN увімкнений, але appName/apiKey порожні";
+      return state.resolvedIceServers;
+    }
+
+    try {
+      const url = `https://${encodeURIComponent(appName)}.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(apiKey)}`;
+      const response = await fetch(url, { cache: "no-store", referrerPolicy: "no-referrer" });
+      if (!response.ok) throw new Error(`TURN HTTP ${response.status}`);
+      const remoteIce = await response.json();
+      if (!Array.isArray(remoteIce) || !remoteIce.length) throw new Error("TURN API повернув порожній список");
+      state.resolvedIceServers = [...base, ...remoteIce];
+      state.iceConfigError = "";
+      return state.resolvedIceServers;
+    } catch (err) {
+      console.error("TURN config error", err);
+      state.resolvedIceServers = base;
+      state.iceConfigError = "Не вдалося завантажити TURN";
+      return state.resolvedIceServers;
+    }
+  }
+
+  function hasTurnServer(servers) {
+    return (servers || []).some(item => {
+      const urls = Array.isArray(item?.urls) ? item.urls : [item?.urls];
+      return urls.some(url => typeof url === "string" && /^turns?:/i.test(url));
+    });
+  }
+
   async function createPeerConnection(remotePeerId, connectionId, isCaller) {
+    const iceServers = await resolveIceServers();
     const pc = new RTCPeerConnection({
-      iceServers: CFG.iceServers,
+      iceServers,
       sdpSemantics: "unified-plan"
     });
+    const turnAvailable = hasTurnServer(iceServers);
 
     state.pc = pc;
     state.remotePeerId = remotePeerId;
@@ -747,8 +796,24 @@
     });
 
     pc.addEventListener("iceconnectionstatechange", () => {
-      if (pc.iceConnectionState === "failed") {
-        setCallState("Немає маршруту", "Спробуй іншу мережу або власний TURN");
+      if (state.pc !== pc) return;
+      const ice = pc.iceConnectionState;
+      if (ice === "checking") {
+        setCallState("З'єднання…", turnAvailable ? "ICE перевіряє P2P / TURN…" : "ICE перевіряє P2P… TURN не налаштований");
+      } else if (ice === "failed") {
+        const detail = turnAvailable
+          ? "ICE не знайшов робочого маршруту навіть через TURN"
+          : "Прямий P2P не пройшов. Для mobile ↔ Wi‑Fi потрібен робочий TURN";
+        setCallState("Немає маршруту", detail);
+      } else if (ice === "disconnected") {
+        setCallState("Відновлюємо зв'язок…", "ICE маршрут тимчасово втрачено");
+      }
+    });
+
+    pc.addEventListener("icegatheringstatechange", () => {
+      if (state.pc !== pc) return;
+      if (pc.iceGatheringState === "complete" && !state.connected && !turnAvailable) {
+        els.networkInfo.textContent = "ICE зібрано • TURN не налаштований";
       }
     });
 
