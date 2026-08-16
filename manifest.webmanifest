@@ -1,13 +1,19 @@
 {
-  "name": "Лінія — WebRTC дзвінок",
-  "short_name": "Лінія",
-  "description": "Простий голосовий WebRTC-дзвінок у браузері",
+  "name": "Линия — WebRTC-звонок",
+  "short_name": "Линия",
+  "description": "Простой голосовой WebRTC-звонок в браузере",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b0d10",
   "theme_color": "#101216",
   "icons": [
-    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
-  ]
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "ru"
 }

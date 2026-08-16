@@ -5,7 +5,7 @@
   Для надійного mobile <-> Wi-Fi підключення налаштуй Metered Open Relay нижче.
 */
 window.PHONE_CONFIG = {
-  appName: "Лінія",
+  appName: "Линия",
 
   signaling: {
     host: "0.peerjs.com",

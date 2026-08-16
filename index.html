@@ -1,27 +1,27 @@
 <!doctype html>
-<html lang="uk">
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#101216" />
   <meta name="color-scheme" content="dark" />
   <meta name="referrer" content="no-referrer" />
-  <meta name="description" content="Простий приватний голосовий WebRTC-дзвінок у браузері." />
-  <title>ЛініяdD — WebRTC дзвінокD</title>
+  <meta name="description" content="Простой приватный голосовой WebRTC-звонок в браузере." />
+  <title>Линия — WebRTC-звонок</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="./styles.css?v=4" />
+  <link rel="stylesheet" href="./styles.css?v=5" />
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"></span>
-        <span id="appName">Лінія</span>
+        <span id="appName">Линия</span>
       </div>
-      <div class="signal-status" id="signalStatus" title="Статус signaling">
+      <div class="signal-status" id="signalStatus" title="Статус сигналинга">
         <span class="status-dot" id="statusDot"></span>
-        <span id="statusText">Підключення…</span>
+        <span id="statusText">Подключение…</span>
       </div>
     </header>
 
@@ -29,27 +29,27 @@
       <div class="hero-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.8 3.5 3.1 4.8 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.4.6 3.7.6.5 0 .8.3.8.8V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.7c.5 0 .8.3.8.8 0 1.3.2 2.5.6 3.7.1.4 0 .8-.3 1.1l-2.2 2.2Z"/></svg>
       </div>
-      <p class="eyebrow" id="modeLabel">Твоя лінія</p>
-      <h1 id="heroTitle">Створи дзвінокD</h1>
-      <p class="hero-copy" id="heroCopy">Отримаєш приватне посилання. Надішли його співрозмовнику і залиш цю сторінку відкритою.</p>
+      <p class="eyebrow" id="modeLabel">Твоя линия</p>
+      <h1 id="heroTitle">Создай звонок</h1>
+      <p class="hero-copy" id="heroCopy">Получишь приватную ссылку. Отправь её собеседнику и оставь эту страницу открытой.</p>
 
       <div class="primary-actions" id="hostActions">
-        <button class="btn btn-primary" id="createInviteBtn" disabled>Створити посилання</button>
+        <button class="btn btn-primary" id="createInviteBtn" disabled>Создать ссылку</button>
       </div>
 
       <div class="invite-box hidden" id="inviteBox">
-        <label for="inviteUrl">Посилання на дзвінок</label>
+        <label for="inviteUrl">Ссылка на звонок</label>
         <div class="invite-row">
           <input id="inviteUrl" type="text" readonly />
-          <button class="btn btn-small" id="copyInviteBtn">Копіювати</button>
+          <button class="btn btn-small" id="copyInviteBtn">Копировать</button>
         </div>
-        <button class="btn btn-secondary" id="shareInviteBtn">Поділитися</button>
-        <p class="hint">Посилання працює, поки ця вкладка підключена до signaling.</p>
+        <button class="btn btn-secondary" id="shareInviteBtn">Поделиться</button>
+        <p class="hint">Ссылка работает, пока эта вкладка подключена к сигналингу.</p>
       </div>
 
       <div class="primary-actions hidden" id="guestActions">
-        <button class="btn btn-call" id="callBtn" disabled>Подзвонити</button>
-        <p class="hint" id="guestHint">Перед дзвінком браузер попросить доступ до мікрофона.</p>
+        <button class="btn btn-call" id="callBtn" disabled>Позвонить</button>
+        <p class="hint" id="guestHint">Перед звонком браузер запросит доступ к микрофону.</p>
       </div>
     </section>
 
@@ -57,14 +57,14 @@
       <div class="call-avatar" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z"/></svg>
       </div>
-      <div class="call-state" id="callState">З'єднання…</div>
+      <div class="call-state" id="callState">Соединение…</div>
       <div class="call-timer" id="callTimer">00:00</div>
-      <div class="network-info" id="networkInfo">Очікуємо WebRTC…</div>
+      <div class="network-info" id="networkInfo">Ожидаем WebRTC…</div>
 
       <div class="call-controls">
         <button class="round-control" id="muteBtn" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
-          <span>Мікрофон</span>
+          <span>Микрофон</span>
         </button>
         <button class="round-control" id="settingsBtn">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.9 7.9 0 0 0 .1-1 7.9 7.9 0 0 0-.1-1l2.1-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L15 3h-4l-.4 3a8 8 0 0 0-1.7 1L6.5 6l-2 3.4L6.6 11a7.9 7.9 0 0 0-.1 1c0 .3 0 .7.1 1l-2.1 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 3h4l.4-3a8 8 0 0 0 1.7-1l2.5 1 2-3.4L19.4 13ZM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
@@ -72,7 +72,7 @@
         </button>
         <button class="round-control hangup" id="hangupBtn">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 15.5c-1-2-2.5-3.6-4.3-4.7l-2 2c-.3.3-.4.7-.2 1.1l.5 1.4a11.8 11.8 0 0 0-7 0l.5-1.4c.2-.4.1-.8-.2-1.1l-2-2a13.3 13.3 0 0 0-4.3 4.7c-.3.6-.1 1.2.4 1.6l2 1.5c.5.4 1.2.3 1.6-.1l1.1-1.1c2.9-1.2 5.9-1.2 8.8 0l1.1 1.1c.4.4 1.1.5 1.6.1l2-1.5c.5-.4.7-1 .4-1.6Z"/></svg>
-          <span>Завершити</span>
+          <span>Завершить</span>
         </button>
       </div>
     </section>
@@ -80,28 +80,28 @@
     <section class="panel settings-panel" id="settingsPanel">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Твій мікрофон</p>
-          <h2>Обробка звуку</h2>
+          <p class="eyebrow">Твой микрофон</p>
+          <h2>Обработка звука</h2>
         </div>
-        <button class="icon-btn hidden" id="closeSettingsBtn" aria-label="Закрити налаштування">×</button>
+        <button class="icon-btn hidden" id="closeSettingsBtn" aria-label="Закрыть настройки">×</button>
       </div>
 
       <div class="setting-row opponent-volume-row">
         <label for="opponentVolume">
-          <strong>Гучність співрозмовника</strong>
-          <span>100% — звичайна, 500% — підсилення у 5 разів</span>
+          <strong>Громкость собеседника</strong>
+          <span>100% — обычная, 500% — усиление в 5 раз</span>
         </label>
         <div class="volume-control">
           <output id="opponentVolumeValue" for="opponentVolume">100%</output>
-          <input id="opponentVolume" class="volume-slider" type="range" min="0" max="500" step="1" value="100" aria-label="Гучність співрозмовника у відсотках" />
+          <input id="opponentVolume" class="volume-slider" type="range" min="0" max="500" step="1" value="100" aria-label="Громкость собеседника в процентах" />
           <div class="volume-scale" aria-hidden="true"><span>0%</span><span>500%</span></div>
         </div>
       </div>
 
       <div class="setting-row hidden" id="microphoneRow">
         <label for="microphoneSelect">
-          <strong>Мікрофон</strong>
-          <span>Можна змінити навіть під час дзвінка</span>
+          <strong>Микрофон</strong>
+          <span>Можно изменить даже во время звонка</span>
         </label>
         <select id="microphoneSelect"></select>
       </div>
@@ -109,51 +109,51 @@
       <div class="switch-list">
         <div class="setting-row">
           <label for="echoToggle">
-            <strong>Прибрати ехо</strong>
-            <span>Якщо співрозмовник чує себе</span>
+            <strong>Убрать эхо</strong>
+            <span>Если собеседник слышит себя</span>
           </label>
-          <button class="switch" id="echoToggle" data-constraint="echoCancellation" role="switch" aria-checked="false"><span>ВИКЛ</span></button>
+          <button class="switch" id="echoToggle" data-constraint="echoCancellation" role="switch" aria-checked="false"><span>ВЫКЛ</span></button>
         </div>
         <div class="setting-row">
           <label for="noiseToggle">
-            <strong>Прибрати шум</strong>
-            <span>Приглушує фон навколо тебе</span>
+            <strong>Убрать шум</strong>
+            <span>Приглушает фоновый шум вокруг тебя</span>
           </label>
-          <button class="switch" id="noiseToggle" data-constraint="noiseSuppression" role="switch" aria-checked="false"><span>ВИКЛ</span></button>
+          <button class="switch" id="noiseToggle" data-constraint="noiseSuppression" role="switch" aria-checked="false"><span>ВЫКЛ</span></button>
         </div>
         <div class="setting-row">
           <label for="gainToggle">
-            <strong>Вирівнювати гучність</strong>
-            <span>Автоматично підтягує тихий голос</span>
+            <strong>Выравнивать громкость</strong>
+            <span>Автоматически усиливает тихий голос</span>
           </label>
-          <button class="switch" id="gainToggle" data-constraint="autoGainControl" role="switch" aria-checked="false"><span>ВИКЛ</span></button>
+          <button class="switch" id="gainToggle" data-constraint="autoGainControl" role="switch" aria-checked="false"><span>ВЫКЛ</span></button>
         </div>
       </div>
 
-      <button class="btn btn-secondary" id="prepareMicBtn">Перевірити мікрофон</button>
-      <p class="hint" id="micHint">Усі три обробки вимкнені за замовчуванням.</p>
+      <button class="btn btn-secondary" id="prepareMicBtn">Проверить микрофон</button>
+      <p class="hint" id="micHint">Все три обработки выключены по умолчанию.</p>
     </section>
 
     <div class="incoming hidden" id="incomingModal" role="dialog" aria-modal="true" aria-labelledby="incomingTitle">
       <div class="incoming-card">
         <div class="ring-pulse"></div>
-        <p class="eyebrow">Вхідний дзвінок</p>
-        <h2 id="incomingTitle">Хтось відкрив твоє посилання</h2>
-        <p>Прийняти голосовий дзвінок?</p>
+        <p class="eyebrow">Входящий звонок</p>
+        <h2 id="incomingTitle">Кто-то открыл твою ссылку</h2>
+        <p>Принять голосовой звонок?</p>
         <div class="incoming-actions">
-          <button class="btn btn-danger" id="declineBtn">Відхилити</button>
-          <button class="btn btn-call" id="acceptBtn">Прийняти</button>
+          <button class="btn btn-danger" id="declineBtn">Отклонить</button>
+          <button class="btn btn-call" id="acceptBtn">Принять</button>
         </div>
       </div>
     </div>
 
-    <button class="audio-unlock hidden" id="audioUnlockBtn">Увімкнути звук співрозмовника</button>
+    <button class="audio-unlock hidden" id="audioUnlockBtn">Включить звук собеседника</button>
     <div class="toast hidden" id="toast" role="status"></div>
 
     <audio id="remoteAudio" autoplay playsinline></audio>
   </main>
 
-  <script src="./config.js?v=4"></script>
-  <script src="./app.js?v=4"></script>
+  <script src="./config.js?v=5"></script>
+  <script src="./app.js?v=5"></script>
 </body>
 </html>

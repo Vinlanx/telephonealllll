@@ -102,7 +102,7 @@
   init();
 
   function init() {
-    els.appName.textContent = CFG.appName || "Лінія";
+    els.appName.textContent = CFG.appName || "Линия";
     initIdentity();
     setupModeUI();
     setupAudioPreferenceUI();
@@ -133,15 +133,15 @@
 
   function setupModeUI() {
     if (state.role === "guest") {
-      els.modeLabel.textContent = "Запрошення на дзвінок";
-      els.heroTitle.textContent = "Подзвонити?";
-      els.heroCopy.textContent = "Ти відкрив приватне посилання. Натисни кнопку — браузер попросить доступ до мікрофона і почне дзвінок.";
+      els.modeLabel.textContent = "Приглашение на звонок";
+      els.heroTitle.textContent = "Позвонить?";
+      els.heroCopy.textContent = "Ты открыл приватную ссылку. Нажми кнопку — браузер запросит доступ к микрофону и начнёт звонок.";
       els.hostActions.classList.add("hidden");
       els.guestActions.classList.remove("hidden");
     } else {
-      els.modeLabel.textContent = "Твоя лінія";
-      els.heroTitle.textContent = "Створи дзвінок";
-      els.heroCopy.textContent = "Отримаєш приватне посилання. Надішли його співрозмовнику і залиш цю сторінку відкритою.";
+      els.modeLabel.textContent = "Твоя линия";
+      els.heroTitle.textContent = "Создай звонок";
+      els.heroCopy.textContent = "Получишь приватную ссылку. Отправь её собеседнику и оставь эту страницу открытой.";
     }
   }
 
@@ -151,7 +151,7 @@
       const isSupported = Boolean(supported[key]);
       if (!isSupported) {
         button.disabled = true;
-        button.title = "Цей браузер не повідомляє про підтримку цієї опції";
+        button.title = "Этот браузер не сообщает о поддержке этой опции";
         button.querySelector("span").textContent = "—";
       } else {
         setSwitchVisual(button, false);
@@ -170,7 +170,7 @@
     els.callBtn.addEventListener("click", startOutgoingCall);
     els.acceptBtn.addEventListener("click", acceptIncomingCall);
     els.declineBtn.addEventListener("click", declineIncomingCall);
-    els.hangupBtn.addEventListener("click", () => endCall({ notify: true, message: "Дзвінок завершено" }));
+    els.hangupBtn.addEventListener("click", () => endCall({ notify: true, message: "Звонок завершён" }));
     els.muteBtn.addEventListener("click", toggleMute);
     els.settingsBtn.addEventListener("click", openSettingsDuringCall);
     els.closeSettingsBtn.addEventListener("click", closeSettingsDuringCall);
@@ -242,7 +242,7 @@
     });
     const url = `${proto}://${s.host}:${s.port}${path}peerjs?${qs}`;
 
-    setSignalStatus("Підключення…");
+    setSignalStatus("Подключение…");
     state.signalReady = false;
     enableModeActions(false);
 
@@ -250,7 +250,7 @@
     try {
       ws = new WebSocket(url);
     } catch (err) {
-      scheduleReconnect("Помилка signaling");
+      scheduleReconnect("Ошибка сигналинга");
       return;
     }
 
@@ -259,7 +259,7 @@
     ws.addEventListener("open", () => {
       state.socketOpen = true;
       state.reconnectAttempt = 0;
-      setSignalStatus("Реєстрація…");
+      setSignalStatus("Регистрация…");
       flushSignalQueue();
       startHeartbeat();
     });
@@ -269,12 +269,12 @@
       try { msg = JSON.parse(event.data); } catch (_) { return; }
       handleSignalMessage(msg).catch(err => {
         console.error(err);
-        showToast("Помилка WebRTC");
+        showToast("Ошибка WebRTC");
       });
     });
 
     ws.addEventListener("error", () => {
-      setSignalStatus("Проблема з мережею", "error");
+      setSignalStatus("Проблема с сетью", "error");
     });
 
     ws.addEventListener("close", () => {
@@ -282,7 +282,7 @@
       state.signalReady = false;
       stopHeartbeat();
       enableModeActions(false);
-      if (!state.intentionalSocketClose) scheduleReconnect("Signaling розірвано");
+      if (!state.intentionalSocketClose) scheduleReconnect("Соединение с сигналингом разорвано");
     });
   }
 
@@ -336,28 +336,29 @@
         return;
 
       case "ID-TAKEN":
-        setSignalStatus("ID вже зайнятий", "error");
+        setSignalStatus("ID уже занят", "error");
         state.intentionalSocketClose = true;
-        showToast("Онови сторінку — signaling ID зайнятий");
+        showToast("Обнови страницу — ID сигналинга занят");
         return;
 
       case "INVALID-KEY":
       case "ERROR":
-        setSignalStatus("Помилка signaling", "error");
-        showToast(msg.payload?.msg || "Signaling server повернув помилку");
+        setSignalStatus("Ошибка сигналинга", "error");
+        if (msg.payload?.msg) console.warn("Signaling server error:", msg.payload.msg);
+        showToast("Сервер сигналинга вернул ошибку");
         return;
 
       case "EXPIRE":
         if (state.role === "guest" && !state.connected) {
           clearTimeout(state.outgoingTimer);
-          setCallState("Немає відповіді", "Посилання може бути застарілим або власник не в мережі");
-          setTimeout(() => endCall({ notify: false, message: "Немає відповіді" }), 1800);
+          setCallState("Нет ответа", "Ссылка могла устареть или владелец не в сети");
+          setTimeout(() => endCall({ notify: false, message: "Нет ответа" }), 1800);
         }
         return;
 
       case "LEAVE":
         if (msg.src && msg.src === state.remotePeerId && state.pc) {
-          endCall({ notify: false, message: "Співрозмовник відключився" });
+          endCall({ notify: false, message: "Собеседник отключился" });
         }
         return;
 
@@ -381,10 +382,10 @@
   }
 
   function showInvite() {
-    if (!state.signalReady) return showToast("Signaling ще підключається");
+    if (!state.signalReady) return showToast("Сигналинг ещё подключается");
     els.inviteUrl.value = buildInviteUrl();
     els.inviteBox.classList.remove("hidden");
-    els.createInviteBtn.textContent = "Посилання готове";
+    els.createInviteBtn.textContent = "Ссылка готова";
     els.createInviteBtn.disabled = true;
   }
 
@@ -392,12 +393,12 @@
     const text = els.inviteUrl.value || buildInviteUrl();
     try {
       await navigator.clipboard.writeText(text);
-      showToast("Посилання скопійовано");
+      showToast("Ссылка скопирована");
     } catch (_) {
       els.inviteUrl.focus();
       els.inviteUrl.select();
       document.execCommand?.("copy");
-      showToast("Скопійовано");
+      showToast("Скопировано");
     }
   }
 
@@ -405,7 +406,7 @@
     const url = els.inviteUrl.value || buildInviteUrl();
     if (navigator.share) {
       try {
-        await navigator.share({ title: CFG.appName || "Лінія", text: "Відкрий посилання, щоб подзвонити мені", url });
+        await navigator.share({ title: CFG.appName || "Линия", text: "Открой ссылку, чтобы позвонить мне", url });
         return;
       } catch (_) {}
     }
@@ -414,15 +415,15 @@
 
   async function prepareMicrophone() {
     els.prepareMicBtn.disabled = true;
-    els.prepareMicBtn.textContent = "Доступ до мікрофона…";
+    els.prepareMicBtn.textContent = "Доступ к микрофону…";
     try {
       await ensureMicrophone();
       await refreshMicrophones(true);
-      els.prepareMicBtn.textContent = "Мікрофон готовий";
+      els.prepareMicBtn.textContent = "Микрофон готов";
       els.micHint.textContent = microphoneDescription();
     } catch (err) {
       handleMicError(err);
-      els.prepareMicBtn.textContent = "Перевірити мікрофон";
+      els.prepareMicBtn.textContent = "Проверить микрофон";
     } finally {
       els.prepareMicBtn.disabled = false;
     }
@@ -440,7 +441,7 @@
   }
 
   async function ensureMicrophone(forceNew = false, deviceId = state.selectedDeviceId) {
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error("getUserMedia недоступний");
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("getUserMedia недоступен");
 
     const existing = state.localStream?.getAudioTracks?.()[0];
     if (existing && existing.readyState === "live" && !forceNew) return state.localStream;
@@ -450,7 +451,7 @@
       audio: buildAudioConstraints(deviceId)
     });
     const track = stream.getAudioTracks()[0];
-    if (!track) throw new Error("Браузер не повернув аудіодоріжку");
+    if (!track) throw new Error("Браузер не вернул аудиодорожку");
 
     try { track.contentHint = "speech"; } catch (_) {}
     track.enabled = !state.isMuted;
@@ -492,7 +493,7 @@
       const d = inputs[i];
       const option = document.createElement("option");
       option.value = d.deviceId;
-      option.textContent = d.label || `Мікрофон ${i + 1}`;
+      option.textContent = d.label || `Микрофон ${i + 1}`;
       if (d.deviceId === current) option.selected = true;
       els.microphoneSelect.appendChild(option);
     }
@@ -508,7 +509,7 @@
     state.selectedDeviceId = deviceId;
     try {
       await ensureMicrophone(true, deviceId);
-      showToast("Мікрофон змінено");
+      showToast("Микрофон изменён");
     } catch (err) {
       state.selectedDeviceId = previous;
       handleMicError(err);
@@ -518,8 +519,8 @@
 
   function microphoneDescription() {
     const track = state.localStream?.getAudioTracks?.()[0];
-    if (!track) return "Усі три обробки вимкнені за замовчуванням.";
-    return track.label ? `Активний: ${track.label}` : "Мікрофон активний";
+    if (!track) return "Все три обработки выключены по умолчанию.";
+    return track.label ? `Активный: ${track.label}` : "Микрофон активен";
   }
 
   async function toggleAudioPreference(button) {
@@ -543,18 +544,18 @@
 
       const settings = track.getSettings?.() || {};
       if (key in settings && Boolean(settings[key]) !== next) {
-        showToast("Браузер не застосував цю опцію");
+        showToast("Браузер не применил эту опцию");
       }
     } catch (err) {
       state.audioPrefs[key] = !next;
       setSwitchVisual(button, !next);
-      showToast("Не вдалося змінити обробку мікрофона");
+      showToast("Не удалось изменить обработку микрофона");
     }
   }
 
   function setSwitchVisual(button, on) {
     button.setAttribute("aria-checked", String(on));
-    button.querySelector("span").textContent = on ? "ВКЛ" : "ВИКЛ";
+    button.querySelector("span").textContent = on ? "ВКЛ" : "ВЫКЛ";
   }
 
   async function startOutgoingCall() {
@@ -565,7 +566,7 @@
       await ensureMicrophone();
       const connectionId = randomToken(20, "mc-");
       const pc = await createPeerConnection(state.targetId, connectionId, true);
-      showCallPanel("Дзвонимо…");
+      showCallPanel("Звоним…");
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -580,12 +581,12 @@
 
       clearTimeout(state.outgoingTimer);
       state.outgoingTimer = setTimeout(() => {
-        if (!state.connected) endCall({ notify: true, message: state.iceConfigError ? `Немає з'єднання • ${state.iceConfigError}` : "Немає з'єднання" });
+        if (!state.connected) endCall({ notify: true, message: state.iceConfigError ? `Нет соединения • ${state.iceConfigError}` : "Нет соединения" });
       }, CFG.outgoingCallTimeoutMs || 30000);
     } catch (err) {
       console.error(err);
       handleMicError(err);
-      endCall({ notify: false, message: "Не вдалося почати дзвінок" });
+      endCall({ notify: false, message: "Не удалось начать звонок" });
     }
   }
 
@@ -622,7 +623,7 @@
       await ensureMicrophone();
       const pc = await createPeerConnection(msg.src, msg.payload.connectionId, false);
       els.incomingModal.classList.add("hidden");
-      showCallPanel("З'єднання…");
+      showCallPanel("Соединение…");
 
       await pc.setRemoteDescription(msg.payload.sdp);
       await flushPendingCandidates(msg.src);
@@ -661,7 +662,7 @@
     state.remotePeerId = "";
     state.connectionId = "";
     els.incomingModal.classList.add("hidden");
-    showToast(reason === "declined" ? "Дзвінок відхилено" : "Не вдалося прийняти дзвінок");
+    showToast(reason === "declined" ? "Звонок отклонён" : "Не удалось принять звонок");
   }
 
   async function handleAnswer(msg) {
@@ -669,7 +670,7 @@
     if (msg.payload?.connectionId !== state.connectionId) return;
 
     if (msg.payload?.rejected) {
-      const text = msg.payload.reason === "busy" ? "Абонент зайнятий" : "Дзвінок відхилено";
+      const text = msg.payload.reason === "busy" ? "Абонент занят" : "Звонок отклонён";
       setCallState(text, "");
       setTimeout(() => endCall({ notify: false, message: text }), 1200);
       return;
@@ -688,7 +689,7 @@
     if (!src || !payload) return;
 
     if (payload.control === "hangup") {
-      if (src === state.remotePeerId) endCall({ notify: false, message: "Співрозмовник завершив дзвінок" });
+      if (src === state.remotePeerId) endCall({ notify: false, message: "Собеседник завершил звонок" });
       return;
     }
 
@@ -799,7 +800,7 @@
 
     if (!mt.enabled) {
       state.resolvedIceServers = limitIceServers(compactIceServers(base));
-      state.iceConfigError = "TURN не налаштований";
+      state.iceConfigError = "TURN не настроен";
       return state.resolvedIceServers;
     }
 
@@ -807,7 +808,7 @@
     const apiKey = String(mt.apiKey || "").trim();
     if (!appName || !apiKey) {
       state.resolvedIceServers = limitIceServers(compactIceServers(base));
-      state.iceConfigError = "TURN увімкнений, але appName/apiKey порожні";
+      state.iceConfigError = "TURN включён, но appName/apiKey пустые";
       return state.resolvedIceServers;
     }
 
@@ -816,14 +817,14 @@
       const response = await fetch(url, { cache: "no-store", referrerPolicy: "no-referrer" });
       if (!response.ok) throw new Error(`TURN HTTP ${response.status}`);
       const remoteIce = await response.json();
-      if (!Array.isArray(remoteIce) || !remoteIce.length) throw new Error("TURN API повернув порожній список");
+      if (!Array.isArray(remoteIce) || !remoteIce.length) throw new Error("TURN API вернул пустой список");
       state.resolvedIceServers = limitIceServers(compactIceServers([...base, ...remoteIce]));
       state.iceConfigError = "";
       return state.resolvedIceServers;
     } catch (err) {
       console.error("TURN config error", err);
       state.resolvedIceServers = limitIceServers(compactIceServers(base));
-      state.iceConfigError = "Не вдалося завантажити TURN";
+      state.iceConfigError = "Не удалось загрузить TURN";
       return state.resolvedIceServers;
     }
   }
@@ -879,12 +880,12 @@
       if (state.pc !== pc) return;
       const cs = pc.connectionState;
       if (cs === "connected") markConnected();
-      else if (cs === "connecting") setCallState("З'єднання…", "");
-      else if (cs === "failed") endCall({ notify: false, message: "WebRTC з'єднання не вдалося" });
+      else if (cs === "connecting") setCallState("Соединение…", "");
+      else if (cs === "failed") endCall({ notify: false, message: "Не удалось установить WebRTC-соединение" });
       else if (cs === "closed") {
-        if (state.pc === pc) endCall({ notify: false, message: "Дзвінок завершено" });
+        if (state.pc === pc) endCall({ notify: false, message: "Звонок завершён" });
       } else if (cs === "disconnected") {
-        setCallState("Відновлюємо зв'язок…", "Мережа тимчасово нестабільна");
+        setCallState("Восстанавливаем связь…", "Сеть временно нестабильна");
       }
     });
 
@@ -892,21 +893,21 @@
       if (state.pc !== pc) return;
       const ice = pc.iceConnectionState;
       if (ice === "checking") {
-        setCallState("З'єднання…", turnAvailable ? "ICE перевіряє P2P / TURN…" : "ICE перевіряє P2P… TURN не налаштований");
+        setCallState("Соединение…", turnAvailable ? "ICE проверяет P2P / TURN…" : "ICE проверяет P2P… TURN не настроен");
       } else if (ice === "failed") {
         const detail = turnAvailable
-          ? "ICE не знайшов робочого маршруту навіть через TURN"
-          : "Прямий P2P не пройшов. Для mobile ↔ Wi‑Fi потрібен робочий TURN";
-        setCallState("Немає маршруту", detail);
+          ? "ICE не нашёл рабочий маршрут даже через TURN"
+          : "Прямой P2P не сработал. Для мобильной сети ↔ Wi‑Fi нужен рабочий TURN";
+        setCallState("Нет маршрута", detail);
       } else if (ice === "disconnected") {
-        setCallState("Відновлюємо зв'язок…", "ICE маршрут тимчасово втрачено");
+        setCallState("Восстанавливаем связь…", "ICE-маршрут временно потерян");
       }
     });
 
     pc.addEventListener("icegatheringstatechange", () => {
       if (state.pc !== pc) return;
       if (pc.iceGatheringState === "complete" && !state.connected && !turnAvailable) {
-        els.networkInfo.textContent = "ICE зібрано • TURN не налаштований";
+        els.networkInfo.textContent = "ICE собран • TURN не настроен";
       }
     });
 
@@ -937,7 +938,7 @@
     channel.addEventListener("message", event => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === "hangup") endCall({ notify: false, message: "Співрозмовник завершив дзвінок" });
+        if (data.type === "hangup") endCall({ notify: false, message: "Собеседник завершил звонок" });
       } catch (_) {}
     });
   }
@@ -958,7 +959,7 @@
     els.callPanel.classList.remove("hidden");
     els.settingsPanel.classList.add("hidden");
     els.closeSettingsBtn.classList.add("hidden");
-    setCallState(label, "Очікуємо WebRTC…");
+    setCallState(label, "Ожидаем WebRTC…");
     els.callTimer.textContent = "00:00";
   }
 
@@ -971,7 +972,7 @@
     if (state.connected) return;
     state.connected = true;
     clearTimeout(state.outgoingTimer);
-    setCallState("На зв'язку", "Визначаємо маршрут…");
+    setCallState("На связи", "Определяем маршрут…");
     state.callStartedAt = Date.now();
     startCallTimer();
     startStats();
@@ -1016,7 +1017,7 @@
         const local = pair.localCandidateId ? stats.get(pair.localCandidateId) : null;
         const remote = pair.remoteCandidateId ? stats.get(pair.remoteCandidateId) : null;
         const relay = local?.candidateType === "relay" || remote?.candidateType === "relay";
-        const route = relay ? "TURN relay" : "Пряме P2P";
+        const route = relay ? "Ретрансляция TURN" : "Прямое P2P";
         const rtt = Number.isFinite(pair.currentRoundTripTime) ? ` • RTT ${Math.round(pair.currentRoundTripTime * 1000)} мс` : "";
         els.networkInfo.textContent = `${route}${rtt}`;
       } catch (_) {}
@@ -1031,7 +1032,7 @@
     state.isMuted = !state.isMuted;
     track.enabled = !state.isMuted;
     els.muteBtn.setAttribute("aria-pressed", String(state.isMuted));
-    els.muteBtn.querySelector("span").textContent = state.isMuted ? "Вимкнено" : "Мікрофон";
+    els.muteBtn.querySelector("span").textContent = state.isMuted ? "Выключен" : "Микрофон";
   }
 
   function openSettingsDuringCall() {
@@ -1165,7 +1166,7 @@
     } catch (_) {}
   }
 
-  function endCall({ notify = false, message = "Дзвінок завершено" } = {}) {
+  function endCall({ notify = false, message = "Звонок завершён" } = {}) {
     if (notify) notifyHangup();
 
     clearTimeout(state.outgoingTimer);
@@ -1193,7 +1194,7 @@
     state.connected = false;
     state.isMuted = false;
     els.muteBtn.setAttribute("aria-pressed", "false");
-    els.muteBtn.querySelector("span").textContent = "Мікрофон";
+    els.muteBtn.querySelector("span").textContent = "Микрофон";
     els.incomingModal.classList.add("hidden");
     els.audioUnlockBtn.classList.add("hidden");
 
@@ -1202,11 +1203,11 @@
     els.settingsPanel.classList.remove("hidden");
     els.closeSettingsBtn.classList.add("hidden");
     els.callTimer.textContent = "00:00";
-    els.networkInfo.textContent = "Очікуємо WebRTC…";
+    els.networkInfo.textContent = "Ожидаем WebRTC…";
 
     if (state.role === "guest") {
       els.callBtn.disabled = !state.signalReady;
-      els.callBtn.textContent = "Подзвонити ще раз";
+      els.callBtn.textContent = "Позвонить ещё раз";
       els.guestHint.textContent = message;
     } else {
       if (els.inviteBox.classList.contains("hidden")) {
@@ -1221,7 +1222,7 @@
     if (!state.localStream) return;
     state.localStream.getTracks().forEach(track => track.stop());
     state.localStream = null;
-    els.micHint.textContent = "Усі три обробки вимкнені за замовчуванням.";
+    els.micHint.textContent = "Все три обработки выключены по умолчанию.";
   }
 
   function cleanupTimers() {
@@ -1235,13 +1236,13 @@
   function handleMicError(err) {
     console.error(err);
     if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
-      showToast("Дозволь доступ до мікрофона в браузері");
+      showToast("Разреши доступ к микрофону в браузере");
     } else if (err?.name === "NotFoundError") {
-      showToast("Мікрофон не знайдено");
+      showToast("Микрофон не найден");
     } else if (err?.name === "OverconstrainedError") {
-      showToast("Обраний мікрофон недоступний");
+      showToast("Выбранный микрофон недоступен");
     } else {
-      showToast("Не вдалося відкрити мікрофон");
+      showToast("Не удалось открыть микрофон");
     }
   }
 
