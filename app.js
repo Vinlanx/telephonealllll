@@ -35,6 +35,8 @@
     microphoneSelect: $("microphoneSelect"),
     prepareMicBtn: $("prepareMicBtn"),
     micHint: $("micHint"),
+    opponentVolume: $("opponentVolume"),
+    opponentVolumeValue: $("opponentVolumeValue"),
     incomingModal: $("incomingModal"),
     acceptBtn: $("acceptBtn"),
     declineBtn: $("declineBtn"),
@@ -82,6 +84,11 @@
     resolvedIceServers: null,
     iceConfigError: "",
 
+    remoteVolume: 100,
+    audioContext: null,
+    remoteAudioSource: null,
+    remoteGain: null,
+
     audioPrefs: {
       echoCancellation: false,
       noiseSuppression: false,
@@ -98,6 +105,7 @@
     initIdentity();
     setupModeUI();
     setupAudioPreferenceUI();
+    setupOpponentVolumeUI();
     bindEvents();
     refreshMicrophones(false).catch(() => {});
     resolveIceServers().catch(() => {});
@@ -150,6 +158,10 @@
     }
   }
 
+  function setupOpponentVolumeUI() {
+    setOpponentVolume(state.remoteVolume);
+  }
+
   function bindEvents() {
     els.createInviteBtn.addEventListener("click", showInvite);
     els.copyInviteBtn.addEventListener("click", copyInvite);
@@ -163,6 +175,7 @@
     els.closeSettingsBtn.addEventListener("click", closeSettingsDuringCall);
     els.prepareMicBtn.addEventListener("click", prepareMicrophone);
     els.microphoneSelect.addEventListener("change", () => switchMicrophone(els.microphoneSelect.value));
+    els.opponentVolume.addEventListener("input", () => setOpponentVolume(Number(els.opponentVolume.value)));
     els.audioUnlockBtn.addEventListener("click", unlockRemoteAudio);
 
     for (const button of els.switches) {
@@ -545,6 +558,7 @@
 
   async function startOutgoingCall() {
     if (!state.signalReady || state.pc) return;
+    activateRemoteAudio();
     els.callBtn.disabled = true;
     try {
       await ensureMicrophone();
@@ -601,6 +615,7 @@
   async function acceptIncomingCall() {
     const msg = state.pendingOffer;
     if (!msg) return;
+    activateRemoteAudio();
     els.acceptBtn.disabled = true;
     try {
       await ensureMicrophone();
@@ -954,9 +969,61 @@
     els.callPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function setOpponentVolume(value) {
+    const percent = Math.min(500, Math.max(0, Math.round(Number(value) || 0)));
+    state.remoteVolume = percent;
+    els.opponentVolume.value = String(percent);
+    els.opponentVolumeValue.value = `${percent}%`;
+    els.opponentVolumeValue.textContent = `${percent}%`;
+    els.opponentVolume.style.setProperty("--volume-progress", `${percent / 5}%`);
+
+    const gain = percent / 100;
+    if (state.remoteGain && state.audioContext) {
+      const now = state.audioContext.currentTime;
+      state.remoteGain.gain.cancelScheduledValues(now);
+      state.remoteGain.gain.setTargetAtTime(gain, now, 0.012);
+    } else {
+      // Без Web Audio браузер може регулювати елемент лише в межах 0–100%.
+      els.remoteAudio.volume = Math.min(1, gain);
+    }
+  }
+
+  function ensureRemoteAudioGraph() {
+    if (state.remoteGain) return true;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return false;
+
+    try {
+      const context = state.audioContext || new AudioContextClass();
+      const source = context.createMediaElementSource(els.remoteAudio);
+      const gain = context.createGain();
+      gain.gain.value = state.remoteVolume / 100;
+      source.connect(gain);
+      gain.connect(context.destination);
+
+      state.audioContext = context;
+      state.remoteAudioSource = source;
+      state.remoteGain = gain;
+      els.remoteAudio.volume = 1;
+      return true;
+    } catch (err) {
+      console.warn("Remote audio gain unavailable", err);
+      return false;
+    }
+  }
+
+  function activateRemoteAudio() {
+    if (!ensureRemoteAudioGraph()) return;
+    if (state.audioContext?.state === "suspended") {
+      state.audioContext.resume().catch(() => {});
+    }
+  }
+
   async function playRemoteAudio() {
+    activateRemoteAudio();
     try {
       await els.remoteAudio.play();
+      if (state.audioContext?.state === "suspended") await state.audioContext.resume();
       els.audioUnlockBtn.classList.add("hidden");
     } catch (_) {
       els.audioUnlockBtn.classList.remove("hidden");
@@ -965,7 +1032,9 @@
 
   async function unlockRemoteAudio() {
     try {
+      activateRemoteAudio();
       await els.remoteAudio.play();
+      if (state.audioContext?.state === "suspended") await state.audioContext.resume();
       els.audioUnlockBtn.classList.add("hidden");
     } catch (_) {}
   }

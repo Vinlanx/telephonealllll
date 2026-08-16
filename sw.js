@@ -1,4 +1,4 @@
-const CACHE = "liniya-v2-metered-ready";
+const CACHE = "liniya-v3-opponent-volume";
 const CORE = ["./", "./index.html", "./styles.css", "./config.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {
