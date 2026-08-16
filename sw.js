@@ -1,5 +1,5 @@
-const CACHE = "liniya-v3-opponent-volume";
-const CORE = ["./", "./index.html", "./styles.css", "./config.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "liniya-v4-opponent-volume-stream";
+const CORE = ["./", "./index.html", "./styles.css?v=4", "./config.js?v=4", "./app.js?v=4", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
@@ -15,12 +15,12 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== location.origin) return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then(response => {
         const copy = response.clone();
         caches.open(CACHE).then(cache => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => caches.match(event.request).then(r => r || caches.match("./index.html")))
+      .catch(() => caches.match(event.request).then(r => r || caches.match(event.request, { ignoreSearch: true })).then(r => r || caches.match("./index.html")))
   );
 });
