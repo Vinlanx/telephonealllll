@@ -28,6 +28,15 @@
     networkInfo: $("networkInfo"),
     muteBtn: $("muteBtn"),
     settingsBtn: $("settingsBtn"),
+    chatBtn: $("chatBtn"),
+    chatPanel: $("chatPanel"),
+    chatMessages: $("chatMessages"),
+    chatEmpty: $("chatEmpty"),
+    chatForm: $("chatForm"),
+    chatInput: $("chatInput"),
+    chatSendBtn: $("chatSendBtn"),
+    chatStatus: $("chatStatus"),
+    chatUnread: $("chatUnread"),
     hangupBtn: $("hangupBtn"),
     settingsPanel: $("settingsPanel"),
     closeSettingsBtn: $("closeSettingsBtn"),
@@ -85,6 +94,8 @@
     iceConfigError: "",
 
     remoteVolume: 100,
+    chatOpen: false,
+    chatUnreadCount: 0,
 
     audioPrefs: {
       echoCancellation: false,
@@ -169,6 +180,8 @@
     els.hangupBtn.addEventListener("click", () => endCall({ notify: true, message: "Звонок завершён" }));
     els.muteBtn.addEventListener("click", toggleMute);
     els.settingsBtn.addEventListener("click", openSettingsDuringCall);
+    els.chatBtn.addEventListener("click", toggleChat);
+    els.chatForm.addEventListener("submit", sendChatMessage);
     els.closeSettingsBtn.addEventListener("click", closeSettingsDuringCall);
     els.prepareMicBtn.addEventListener("click", prepareMicrophone);
     els.microphoneSelect.addEventListener("change", () => switchMicrophone(els.microphoneSelect.value));
@@ -938,12 +951,111 @@
 
   function setupControlChannel(channel) {
     state.controlChannel = channel;
+    updateChatAvailability();
+
+    channel.addEventListener("open", updateChatAvailability);
+    channel.addEventListener("close", updateChatAvailability);
+    channel.addEventListener("error", updateChatAvailability);
     channel.addEventListener("message", event => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === "hangup") endCall({ notify: false, message: "Собеседник завершил звонок" });
+        if (data.type === "hangup") {
+          endCall({ notify: false, message: "Собеседник завершил звонок" });
+          return;
+        }
+        if (data.type === "chat" && typeof data.text === "string") {
+          const text = normalizeChatText(data.text);
+          if (!text) return;
+          appendChatMessage(text, "remote");
+          if (!state.chatOpen) {
+            state.chatUnreadCount += 1;
+            updateChatUnread();
+          }
+        }
       } catch (_) {}
     });
+  }
+
+  function normalizeChatText(value) {
+    return String(value ?? "").replace(/\r\n?/g, "\n").trim().slice(0, 2000);
+  }
+
+  function updateChatAvailability() {
+    const ready = state.controlChannel?.readyState === "open";
+    els.chatInput.disabled = !ready;
+    els.chatSendBtn.disabled = !ready;
+    els.chatStatus.textContent = ready ? "P2P • сообщения не сохраняются" : "Чат подключается…";
+  }
+
+  function toggleChat() {
+    if (!state.pc) return;
+    state.chatOpen = !state.chatOpen;
+    els.chatPanel.classList.toggle("hidden", !state.chatOpen);
+    els.chatBtn.setAttribute("aria-pressed", String(state.chatOpen));
+
+    if (state.chatOpen) {
+      state.chatUnreadCount = 0;
+      updateChatUnread();
+      requestAnimationFrame(() => {
+        els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+        if (!els.chatInput.disabled) els.chatInput.focus({ preventScroll: true });
+      });
+    }
+  }
+
+  function sendChatMessage(event) {
+    event.preventDefault();
+    const text = normalizeChatText(els.chatInput.value);
+    if (!text) return;
+
+    if (state.controlChannel?.readyState !== "open") {
+      showToast("Чат ещё подключается");
+      updateChatAvailability();
+      return;
+    }
+
+    try {
+      state.controlChannel.send(JSON.stringify({ type: "chat", text }));
+      appendChatMessage(text, "local");
+      els.chatInput.value = "";
+      els.chatInput.focus({ preventScroll: true });
+    } catch (err) {
+      console.warn("Chat send failed", err);
+      showToast("Не удалось отправить сообщение");
+    }
+  }
+
+  function appendChatMessage(text, side) {
+    els.chatEmpty.classList.add("hidden");
+    const row = document.createElement("div");
+    row.className = `chat-message ${side === "local" ? "mine" : "theirs"}`;
+
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble";
+    bubble.textContent = text;
+
+    row.appendChild(bubble);
+    els.chatMessages.appendChild(row);
+    els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+  }
+
+  function updateChatUnread() {
+    const count = state.chatUnreadCount;
+    els.chatUnread.textContent = count > 99 ? "99+" : String(count);
+    els.chatUnread.classList.toggle("hidden", count <= 0);
+    els.chatBtn.setAttribute("aria-label", count > 0 ? `Чат, новых сообщений: ${count}` : "Открыть чат");
+  }
+
+  function clearChat() {
+    state.chatOpen = false;
+    state.chatUnreadCount = 0;
+    els.chatPanel.classList.add("hidden");
+    els.chatBtn.setAttribute("aria-pressed", "false");
+    els.chatMessages.querySelectorAll(".chat-message").forEach(node => node.remove());
+    els.chatEmpty.classList.remove("hidden");
+    els.chatInput.value = "";
+    updateChatUnread();
+    updateChatAvailability();
   }
 
   function notifyHangup() {
@@ -962,6 +1074,7 @@
     els.callPanel.classList.remove("hidden");
     els.settingsPanel.classList.add("hidden");
     els.closeSettingsBtn.classList.add("hidden");
+    clearChat();
     setCallState(label, "Ожидаем WebRTC…");
     els.callTimer.textContent = "00:00";
   }
@@ -979,6 +1092,7 @@
     state.callStartedAt = Date.now();
     startCallTimer();
     startStats();
+    updateChatAvailability();
 
     const sender = state.pc?.getSenders().find(s => s.track?.kind === "audio");
     if (sender) setSenderBitrate(sender).catch(() => {});
@@ -1134,6 +1248,7 @@
     els.muteBtn.querySelector("span").textContent = "Микрофон";
     els.incomingModal.classList.add("hidden");
     els.audioUnlockBtn.classList.add("hidden");
+    clearChat();
 
     els.callPanel.classList.add("hidden");
     els.homePanel.classList.remove("hidden");

@@ -95,6 +95,30 @@ h2 { font-size: 24px; }
 .incoming-actions { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .audio-unlock { position: fixed; z-index: 70; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, calc(100% - 32px)); border: 0; border-radius: 16px; padding: 14px; background: var(--blue); color: #0b1019; font-weight: 850; cursor: pointer; }
 .toast { position: fixed; z-index: 80; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); padding: 11px 14px; border-radius: 12px; background: #f2f4f6; color: #11151a; font-size: 13px; font-weight: 750; box-shadow: var(--shadow); }
+
+/* Ephemeral P2P chat */
+.chat-control { position: relative; }
+.chat-unread { position: absolute; top: 0; right: 7px; z-index: 2; min-width: 20px; height: 20px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--red); color: #fff; font-size: 10px; font-weight: 900; line-height: 1; box-shadow: 0 0 0 3px var(--panel); }
+.chat-panel { width: min(620px, 100%); margin: 30px auto 0; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: #101318; text-align: left; }
+.chat-head { min-height: 58px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+.chat-head strong { display: block; font-size: 15px; }
+.chat-head span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+.chat-private { flex: 0 0 auto; margin: 0 !important; padding: 5px 8px; border: 1px solid #2f6048; border-radius: 999px; color: var(--green) !important; font-weight: 800; }
+.chat-messages { height: min(38vh, 330px); min-height: 180px; overflow-y: auto; overscroll-behavior: contain; padding: 14px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; }
+.chat-empty { margin: auto; max-width: 360px; padding: 20px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+.chat-message { display: flex; width: 100%; }
+.chat-message.mine { justify-content: flex-end; }
+.chat-message.theirs { justify-content: flex-start; }
+.chat-bubble { max-width: min(82%, 430px); padding: 10px 12px; border-radius: 15px 15px 15px 5px; background: #252a32; color: var(--text); font-size: 14px; line-height: 1.42; overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-message.mine .chat-bubble { border-radius: 15px 15px 5px 15px; background: var(--green); color: #07140e; }
+.chat-form { padding: 10px; display: grid; grid-template-columns: 1fr auto; gap: 8px; border-top: 1px solid var(--line); background: #14181e; }
+.chat-form input { min-width: 0; height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: 14px; outline: none; background: #0d1014; color: var(--text); font: inherit; }
+.chat-form input:focus { border-color: #446b58; box-shadow: 0 0 0 3px rgba(57,217,138,.08); }
+.chat-form input:disabled { opacity: .55; }
+.chat-send { width: 46px; height: 46px; display: grid; place-items: center; border: 0; border-radius: 14px; background: var(--green); color: #07140e; cursor: pointer; }
+.chat-send:disabled { opacity: .4; cursor: not-allowed; }
+.chat-send svg { width: 21px; height: 21px; fill: currentColor; }
+
 @media (max-width: 560px) {
   .app-shell { padding-left: 10px; padding-right: 10px; }
   .topbar { padding: 0 6px; }
@@ -105,6 +129,12 @@ h2 { font-size: 24px; }
   .setting-row select { max-width: 50%; min-width: 145px; }
   .opponent-volume-row { align-items: stretch; flex-direction: column; gap: 12px; }
   .volume-control { flex-basis: auto; width: 100%; min-width: 0; }
-  .round-control { width: 78px; }
-  .round-control svg { width: 54px; height: 54px; }
+  .call-controls { gap: 6px; }
+  .round-control { width: 68px; }
+  .round-control svg { width: 50px; height: 50px; padding: 15px; }
+  .chat-unread { right: 2px; }
+  .chat-panel { margin-top: 24px; border-radius: 16px; }
+  .chat-messages { height: min(42vh, 300px); min-height: 160px; padding: 10px; }
+  .chat-head { padding: 10px 12px; }
+  .chat-private { display: none !important; }
 }

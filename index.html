@@ -10,7 +10,7 @@
   <title>Линия — WebRTC-звонок</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="./styles.css?v=6" />
+  <link rel="stylesheet" href="./styles.css?v=7" />
 </head>
 <body>
   <main class="app-shell">
@@ -70,10 +70,34 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.9 7.9 0 0 0 .1-1 7.9 7.9 0 0 0-.1-1l2.1-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L15 3h-4l-.4 3a8 8 0 0 0-1.7 1L6.5 6l-2 3.4L6.6 11a7.9 7.9 0 0 0-.1 1c0 .3 0 .7.1 1l-2.1 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 3h4l.4-3a8 8 0 0 0 1.7-1l2.5 1 2-3.4L19.4 13ZM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>
           <span>Звук</span>
         </button>
+        <button class="round-control chat-control" id="chatBtn" aria-pressed="false" aria-label="Открыть чат">
+          <span class="chat-unread hidden" id="chatUnread" aria-hidden="true">0</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2H8l-5 3v-3.5A2 2 0 0 1 2 16V6c0-1.1.9-2 2-2Zm2.5 6.5h11v-2h-11v2Zm0 4h8v-2h-8v2Z"/></svg>
+          <span>Чат</span>
+        </button>
         <button class="round-control hangup" id="hangupBtn">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 15.5c-1-2-2.5-3.6-4.3-4.7l-2 2c-.3.3-.4.7-.2 1.1l.5 1.4a11.8 11.8 0 0 0-7 0l.5-1.4c.2-.4.1-.8-.2-1.1l-2-2a13.3 13.3 0 0 0-4.3 4.7c-.3.6-.1 1.2.4 1.6l2 1.5c.5.4 1.2.3 1.6-.1l1.1-1.1c2.9-1.2 5.9-1.2 8.8 0l1.1 1.1c.4.4 1.1.5 1.6.1l2-1.5c.5-.4.7-1 .4-1.6Z"/></svg>
           <span>Завершить</span>
         </button>
+      </div>
+
+      <div class="chat-panel hidden" id="chatPanel">
+        <div class="chat-head">
+          <div>
+            <strong>Чат</strong>
+            <span id="chatStatus">Чат подключается…</span>
+          </div>
+          <span class="chat-private">только сейчас</span>
+        </div>
+        <div class="chat-messages" id="chatMessages" aria-live="polite" aria-label="Сообщения чата">
+          <div class="chat-empty" id="chatEmpty">Сообщения идут напрямую между вами и исчезнут после звонка.</div>
+        </div>
+        <form class="chat-form" id="chatForm" autocomplete="off">
+          <input id="chatInput" type="text" maxlength="2000" placeholder="Сообщение…" aria-label="Сообщение" disabled />
+          <button class="chat-send" id="chatSendBtn" type="submit" aria-label="Отправить" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.4 20.4 18-8a1 1 0 0 0 0-1.8l-18-8A1 1 0 0 0 2 3.7L4.3 10H13v4H4.3L2 20.3a1 1 0 0 0 1.4 1.1Z"/></svg>
+          </button>
+        </form>
       </div>
     </section>
 
@@ -153,7 +177,7 @@
     <audio id="remoteAudio" autoplay playsinline></audio>
   </main>
 
-  <script src="./config.js?v=6"></script>
-  <script src="./app.js?v=6"></script>
+  <script src="./config.js?v=7"></script>
+  <script src="./app.js?v=7"></script>
 </body>
 </html>
