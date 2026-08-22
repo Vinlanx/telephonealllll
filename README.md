@@ -1,3 +1,11 @@
+# ВИПРАВЛЕННЯ V6 — МОБІЛЬНИЙ ЗВУК
+
+У v6 remote WebRTC audio відтворюється напряму через `<audio>.srcObject`. Попередній тракт `AudioContext → GainNode → MediaStreamDestination → <audio>` міг залишатися `suspended` на мобільних Safari/Chrome: WebRTC уже був `connected`, але один або обидва співрозмовники чули тишу. Для надійності підсилення понад 100% прибрано.
+
+Після оновлення на GitHub Pages закрий стару PWA/вкладки та відкрий сайт знову; cache name і версії JS/CSS підняті до v6.
+
+---
+
 # ВАЖЛИВЕ ОНОВЛЕННЯ — TURN
 
 Старі безкоштовні TURN-сервери PeerJS (`eu-0.turn.peerjs.com` / `us-0.turn.peerjs.com`) більше не використовуються: сервіс був закритий. Через це mobile ↔ Wi‑Fi часто зависає на «З’єднання…», якщо прямий P2P не проходить.

@@ -85,10 +85,6 @@
     iceConfigError: "",
 
     remoteVolume: 100,
-    audioContext: null,
-    remoteAudioSource: null,
-    remoteGain: null,
-    remoteAudioDestination: null,
 
     audioPrefs: {
       echoCancellation: false,
@@ -874,6 +870,13 @@
       const stream = event.streams?.[0] || new MediaStream([event.track]);
       state.remoteStream = stream;
       playRemoteAudio(stream);
+
+      // Деякі мобільні браузери віддають track event ще до фактичного
+      // надходження RTP. Повторний play на unmute допомагає Safari/Chrome
+      // без створення нестабільного Web Audio проміжного потоку.
+      event.track.addEventListener("unmute", () => {
+        if (state.remoteStream === stream) playRemoteAudio(stream);
+      }, { once: true });
     });
 
     pc.addEventListener("connectionstatechange", () => {
@@ -1049,121 +1052,56 @@
   }
 
   function setOpponentVolume(value) {
-    const percent = Math.min(500, Math.max(0, Math.round(Number(value) || 0)));
+    // HTMLMediaElement.volume надійно працює у всіх основних браузерах
+    // у діапазоні 0..1. Попередній режим 500% будував окремий Web Audio
+    // граф, який на iOS/Android міг залишатися suspended і давати тишу.
+    const percent = Math.min(100, Math.max(0, Math.round(Number(value) || 0)));
     state.remoteVolume = percent;
     els.opponentVolume.value = String(percent);
     els.opponentVolumeValue.value = `${percent}%`;
     els.opponentVolumeValue.textContent = `${percent}%`;
-    els.opponentVolume.style.setProperty("--volume-progress", `${percent / 5}%`);
-
-    const gainValue = percent / 100;
-    if (state.remoteGain && state.audioContext) {
-      const now = state.audioContext.currentTime;
-      state.remoteGain.gain.cancelScheduledValues(now);
-      state.remoteGain.gain.setTargetAtTime(gainValue, now, 0.015);
-    } else {
-      // Fallback без Web Audio: браузерний volume працює тільки в межах 0–100%.
-      els.remoteAudio.volume = Math.min(1, gainValue);
-    }
-  }
-
-  function ensureRemoteAudioContext() {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return false;
-
-    try {
-      if (!state.audioContext || state.audioContext.state === "closed") {
-        state.audioContext = new AudioContextClass();
-      }
-      return true;
-    } catch (err) {
-      console.warn("Remote AudioContext unavailable", err);
-      return false;
-    }
-  }
-
-  function cleanupRemoteAudioGraph({ closeContext = false } = {}) {
-    try { state.remoteAudioSource?.disconnect(); } catch (_) {}
-    try { state.remoteGain?.disconnect(); } catch (_) {}
-    try { state.remoteAudioDestination?.stream?.getTracks?.().forEach(track => track.stop()); } catch (_) {}
-
-    state.remoteAudioSource = null;
-    state.remoteGain = null;
-    state.remoteAudioDestination = null;
-
-    if (closeContext && state.audioContext) {
-      const context = state.audioContext;
-      state.audioContext = null;
-      if (context.state !== "closed") context.close().catch(() => {});
-    }
-  }
-
-  function connectRemoteAudioStream(stream) {
-    if (!stream || !stream.getAudioTracks?.().length || !ensureRemoteAudioContext()) return false;
-
-    try {
-      cleanupRemoteAudioGraph();
-
-      const context = state.audioContext;
-      const source = context.createMediaStreamSource(stream);
-      const gain = context.createGain();
-      const destination = context.createMediaStreamDestination();
-
-      gain.gain.value = state.remoteVolume / 100;
-      source.connect(gain);
-      gain.connect(destination);
-
-      state.remoteAudioSource = source;
-      state.remoteGain = gain;
-      state.remoteAudioDestination = destination;
-
-      // Відтворюємо саме ОБРОБЛЕНИЙ Web Audio потік. Так GainNode гарантовано
-      // знаходиться в реальному аудіошляху WebRTC, а не обходиться srcObject-ом.
-      els.remoteAudio.srcObject = destination.stream;
-      els.remoteAudio.volume = 1;
-      els.remoteAudio.muted = false;
-      return true;
-    } catch (err) {
-      console.warn("Remote stream gain unavailable", err);
-      cleanupRemoteAudioGraph();
-      return false;
-    }
+    els.opponentVolume.style.setProperty("--volume-progress", `${percent}%`);
+    els.remoteAudio.volume = percent / 100;
   }
 
   function activateRemoteAudio() {
-    if (!ensureRemoteAudioContext()) return;
-    if (state.audioContext?.state === "suspended") {
-      state.audioContext.resume().catch(() => {});
-    }
+    // Викликається безпосередньо з user gesture (Подзвонити / Прийняти).
+    // Не створюємо AudioContext: він є частою причиною silent remote audio
+    // на мобільних браузерах після асинхронної WebRTC-події track.
+    els.remoteAudio.muted = false;
+    els.remoteAudio.volume = state.remoteVolume / 100;
   }
 
   async function playRemoteAudio(stream = state.remoteStream) {
-    const processed = connectRemoteAudioStream(stream);
+    if (!stream || !stream.getAudioTracks?.().length) return;
 
-    if (!processed) {
-      // Надійний fallback: дзвінок не лишиться без звуку, навіть якщо Web Audio недоступний.
+    if (els.remoteAudio.srcObject !== stream) {
       els.remoteAudio.srcObject = stream;
-      els.remoteAudio.volume = Math.min(1, state.remoteVolume / 100);
     }
+    els.remoteAudio.muted = false;
+    els.remoteAudio.volume = state.remoteVolume / 100;
 
-    activateRemoteAudio();
     try {
-      if (state.audioContext?.state === "suspended") await state.audioContext.resume();
       await els.remoteAudio.play();
       els.audioUnlockBtn.classList.add("hidden");
-    } catch (_) {
+    } catch (err) {
+      console.warn("Remote audio autoplay blocked", err);
+      // Якщо браузер усе ж вимагає окремий user gesture, показуємо кнопку.
       els.audioUnlockBtn.classList.remove("hidden");
     }
   }
 
   async function unlockRemoteAudio() {
     try {
-      if (state.remoteStream && !state.remoteGain) connectRemoteAudioStream(state.remoteStream);
       activateRemoteAudio();
-      if (state.audioContext?.state === "suspended") await state.audioContext.resume();
+      if (state.remoteStream && els.remoteAudio.srcObject !== state.remoteStream) {
+        els.remoteAudio.srcObject = state.remoteStream;
+      }
       await els.remoteAudio.play();
       els.audioUnlockBtn.classList.add("hidden");
-    } catch (_) {}
+    } catch (err) {
+      console.warn("Remote audio unlock failed", err);
+    }
   }
 
   function endCall({ notify = false, message = "Звонок завершён" } = {}) {
@@ -1186,7 +1124,6 @@
     state.remoteStream = null;
     els.remoteAudio.pause();
     els.remoteAudio.srcObject = null;
-    cleanupRemoteAudioGraph({ closeContext: true });
     state.remotePeerId = "";
     state.connectionId = "";
     state.pendingOffer = null;

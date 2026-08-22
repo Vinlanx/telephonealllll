@@ -1,5 +1,5 @@
-const CACHE = "liniya-v5-russian-ui";
-const CORE = ["./", "./index.html", "./styles.css?v=5", "./config.js?v=5", "./app.js?v=5", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "liniya-v6-audio-fix";
+const CORE = ["./", "./index.html", "./styles.css?v=6", "./config.js?v=6", "./app.js?v=6", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
